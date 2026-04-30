@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Redirect</title>
+<title>Smart Redirect</title>
 <script>
-window.location.href = "https://srj-source.github.io/Cv01";
+function detectDevice() {
+    var userAgent = navigator.userAgent.toLowerCase();
+
+    if (/android|iphone|ipad|ipod|mobile/i.test(userAgent)) {
+        window.location.href = "https://srj-source.github.io/Cv01";
+    } else {
+        window.location.href = "https://srj-source.github.io/Cv01/preview.html";
+    }
+}
 </script>
 </head>
-<body>
+<body onload="detectDevice()">
 </body>
 </html>

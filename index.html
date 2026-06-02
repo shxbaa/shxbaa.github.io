@@ -1,19 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Smart Redirect</title>
-<script>
-function detectDevice() {
-    var userAgent = navigator.userAgent.toLowerCase();
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Redirect</title>
+</head>
+<body>
+    <noscript>JavaScript is required for automatic redirection.</noscript>
 
-    if (/android|iphone|ipad|ipod|mobile/i.test(userAgent)) {
-        window.location.href = "https://srj-source.github.io/Cv01";
-    } else {
-        window.location.href = "https://srj-source.github.io/Cv01/preview.html";
-    }
-}
-</script>
-</head><!-- preview.html-->
-<body onload="detectDevice()">
+    <script>
+    (function() {
+        'use strict';
+
+        // ---------- CONFIGURATION ----------
+        const MOBILE_URL = "https://srj-source.github.io/Cv01";
+        const DESKTOP_URL = "https://srj-source.github.io/Cv01/preview.html";
+
+        // Detect if we are already on the correct target page
+        const currentFullUrl = window.location.href;
+        const currentPath = window.location.pathname;
+        const isOnMobileVersion = currentFullUrl.startsWith(MOBILE_URL) || currentPath === "/Cv01" || currentPath.startsWith("/Cv01?") || currentPath.startsWith("/Cv01#");
+        const isOnDesktopVersion = currentFullUrl.startsWith(DESKTOP_URL) || currentPath === "/preview.html" || currentPath.startsWith("/preview.html?");
+
+        // ---------- DEVICE DETECTION (ACCURATE) ----------
+        function getDeviceType() {
+            const ua = navigator.userAgent || "";
+            const maxTouchPoints = navigator.maxTouchPoints || 0;
+            const platform = navigator.platform || "";
+
+            // 1. Bots / Crawlers → treat as desktop to avoid endless loops
+            if (/bot|crawler|spider|scraper|facebookexternalhit|WhatsApp|TelegramBot/i.test(ua)) {
+                return "desktop";
+            }
+
+            // 2. iPadOS detection (modern iPads on macOS user agent)
+            const isIPad = /iPad/.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
+            if (isIPad) {
+                return "mobile";
+            }
+
+            // 3. iPhone / iPod
+            if (/iPhone|iPod/.test(ua)) {
+                return "mobile";
+            }
+
+            // 4. Android (excluding Android TV)
+            if (/Android/.test(ua)) {
+                if (/TV|SmartTV|BRAVIA|Android TV/i.test(ua)) {
+                    return "desktop";
+                }
+                return "mobile";
+            }
+
+            // 5. Windows Phone
+            if (/Windows Phone/.test(ua)) {
+                return "mobile";
+            }
+
+            // 6. Generic mobile user agents
+            if (/Mobile|Opera Mini|IEMobile|BB10|BlackBerry/i.test(ua)) {
+                return "mobile";
+            }
+
+            // 7. Desktop by platform
+            if (/Win|Mac|Linux|CrOS|X11/.test(platform)) {
+                return "desktop";
+            }
+
+            // 8. Touchscreen but desktop OS → still desktop
+            if (maxTouchPoints > 0 && /Windows|Macintosh|Linux/.test(platform)) {
+                return "desktop";
+            }
+
+            // 9. Fallback
+            return "desktop";
+        }
+
+        // ---------- PERFORM REDIRECT LOGIC ----------
+        const deviceType = getDeviceType();
+        let shouldRedirect = false;
+        let targetUrl = "";
+
+        if (deviceType === "mobile") {
+            if (!isOnMobileVersion && !isOnDesktopVersion) {
+                // Not on any version → redirect to mobile
+                targetUrl = MOBILE_URL;
+                shouldRedirect = true;
+            } else if (isOnDesktopVersion) {
+                // Mobile user on desktop page → fix redirect to mobile
+                targetUrl = MOBILE_URL;
+                shouldRedirect = true;
+            }
+        } else { // desktop
+            if (!isOnDesktopVersion && !isOnMobileVersion) {
+                targetUrl = DESKTOP_URL;
+                shouldRedirect = true;
+            } else if (isOnMobileVersion) {
+                // Desktop user on mobile page → fix redirect to desktop
+                targetUrl = DESKTOP_URL;
+                shouldRedirect = true;
+            }
+        }
+
+        // Prevent loops — only redirect if target is different from current
+        if (shouldRedirect && targetUrl !== currentFullUrl) {
+            // Use replace() so user doesn't get stuck in back-button loop
+            window.location.replace(targetUrl);
+        }
+    })();
+    </script>
 </body>
 </html>
